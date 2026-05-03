@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Meal Planner - Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #F8FAFC; color: #1E293B; }
+        .accent-amber { background-color: #F59E0B; }
+        .primary-emerald { background-color: #10B981; }
+    </style>
+</head>
+<body class="font-sans">
+    <div class="max-w-7xl mx-auto p-4">
+        <!-- ヘッダー -->
+        <header class="flex justify-between items-center p-4 bg-white shadow-sm rounded-xl mb-6">
+            <h1 class="text-2xl font-bold text-emerald-600">AI Meal Planner</h1>
+            <div class="flex items-center gap-4">
+                <span class="font-medium">2024年5月第3週</span>
+                <button class="p-2 hover:bg-gray-100 rounded-full">⚙️</button>
+            </div>
+        </header>
+
+        <!-- メインコンテンツ: 週間ビュー -->
+        <main id="weekly-grid" class="grid grid-cols-1 md:grid-cols-7 gap-4">
+            <!-- JSで動的に生成されます -->
+        </main>
+
+        <!-- フッター -->
+        <footer class="flex justify-end items-center p-6 bg-white shadow-sm rounded-xl mt-6 gap-4">
+            <button class="px-6 py-2 primary-emerald text-white rounded-lg hover:opacity-90 transition-opacity">
+                合計栄養素グラフ
+            </button>
+            <button class="px-6 py-2 bg-gray-200 text-slate-700 rounded-lg hover:bg-gray-300 transition-colors">
+                CSV書き出し
+            </button>
+        </footer>
+    </div>
+    <script src="./app.js"></script>
+</body>
+</html>

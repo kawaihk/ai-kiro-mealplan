@@ -1,0 +1,36 @@
+{
+  "version": "1.0",
+  "unit": "kcal",
+  "weekly_plan": [
+    {
+      "day": "月曜日",
+      "date": "2024-05-13",
+      "meals": {
+        "breakfast": {
+          "menu_id": "b-001",
+          "title": "伝統的な和食の朝食",
+          "items": ["鯖の塩焼き", "味噌汁", "白米", "納豆"],
+          "total_calories": 550,
+          "nutrients": { "protein": 25.5, "fat": 15.2, "carbohydrates": 75.0 },
+          "tags": ["高タンパク", "和食"]
+        },
+        "lunch": {
+          "menu_id": "l-001",
+          "title": "キヌアのブッダボウル",
+          "items": ["キヌア", "ローストひよこ豆", "アボカド", "タヒニドレッシング"],
+          "total_calories": 620,
+          "nutrients": { "protein": 18.0, "fat": 22.5, "carbohydrates": 85.0 },
+          "tags": ["ヴィーガン", "グルテンフリー"]
+        },
+        "dinner": {
+          "menu_id": "d-001",
+          "title": "鶏胸肉のハーブ焼き",
+          "items": ["鶏胸肉", "蒸しブロッコリー", "さつまいものマッシュ"],
+          "total_calories": 480,
+          "nutrients": { "protein": 42.0, "fat": 12.0, "carbohydrates": 45.0 },
+          "tags": ["低糖質", "筋力アップ"]
+        }
+      }
+    }
+  ]
+}
