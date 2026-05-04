@@ -14,8 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Optional;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
@@ -41,12 +39,13 @@ class GlobalExceptionHandlerTest {
     @DisplayName("ResourceNotFoundException - 404 Not Found とエラーボディを返す")
     void handleResourceNotFoundException() throws Exception {
         when(recipeService.getRecipeById(99L))
-                .thenReturn(Optional.empty());
+                .thenThrow(new ResourceNotFoundException("Recipe not found with id: 99"));
 
         mockMvc.perform(get("/api/recipes/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not Found"));
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message").value("Recipe not found with id: 99"));
     }
 
     @Test

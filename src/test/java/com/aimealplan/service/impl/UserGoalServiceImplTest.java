@@ -42,11 +42,15 @@ class UserGoalServiceImplTest {
         userGoal = UserGoal.builder()
                 .id(1L).user(user)
                 .targetCalories(2000)
+                .targetWeight(65.5)
+                .activityLevel("MODERATE")
                 .targetProtein(30).targetFat(30).targetCarbohydrates(40)
                 .build();
         userGoalDto = new UserGoalDto();
         userGoalDto.setUserId(1L);
         userGoalDto.setTargetCalories(2000);
+        userGoalDto.setTargetWeight(65.5);
+        userGoalDto.setActivityLevel("MODERATE");
         userGoalDto.setProteinRatio(30);
         userGoalDto.setFatRatio(30);
         userGoalDto.setCarbohydrateRatio(40);
@@ -64,7 +68,11 @@ class UserGoalServiceImplTest {
 
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getTargetCalories()).isEqualTo(2000);
+        assertThat(result.getTargetWeight()).isEqualTo(65.5);
+        assertThat(result.getActivityLevel()).isEqualTo("MODERATE");
         assertThat(result.getProteinRatio()).isEqualTo(30);
+        assertThat(result.getFatRatio()).isEqualTo(30);
+        assertThat(result.getCarbohydrateRatio()).isEqualTo(40);
     }
 
     @Test

@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -67,6 +68,9 @@ class MealControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1L))
                 .andExpect(jsonPath("$.recipeName").value("チキンカレー"));
+
+        // mealPlanId がコントローラで DTO に正しくセットされてサービスに渡されることを検証
+        verify(mealService).createMeal(argThat(dto -> dto.getMealPlanId().equals(1L)));
     }
 
     @Test
