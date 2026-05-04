@@ -65,14 +65,29 @@ document.addEventListener('DOMContentLoaded', () => {
         recipeTableBody.innerHTML = '';
         recipes.forEach(recipe => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${escapeHtml(recipe.title)}</td>
-                <td>${recipe.calories != null ? escapeHtml(String(recipe.calories)) : '-'} kcal</td>
-                <td>
-                    <button onclick="editRecipe(${recipe.id})">編集</button>
-                    <button onclick="deleteRecipe(${recipe.id})">削除</button>
-                </td>
-            `;
+
+            const titleTd = document.createElement('td');
+            titleTd.textContent = recipe.title;
+
+            const caloriesTd = document.createElement('td');
+            caloriesTd.textContent = (recipe.calories != null ? recipe.calories : '-') + ' kcal';
+
+            const actionTd = document.createElement('td');
+
+            const editBtn = document.createElement('button');
+            editBtn.textContent = '編集';
+            editBtn.addEventListener('click', () => editRecipe(recipe.id));
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = '削除';
+            deleteBtn.addEventListener('click', () => deleteRecipe(recipe.id));
+
+            actionTd.appendChild(editBtn);
+            actionTd.appendChild(deleteBtn);
+
+            tr.appendChild(titleTd);
+            tr.appendChild(caloriesTd);
+            tr.appendChild(actionTd);
             recipeTableBody.appendChild(tr);
         });
     }
@@ -102,8 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
         clearErrors();
     }
 
-    // グローバルに公開（onclickイベント用）
-    window.editRecipe = async (id) => {
+    // 編集・削除処理（renderTable の addEventListener から呼び出す）
+    async function editRecipe(id) {
         try {
             const recipe = await get(`${API_BASE}/${id}`);
 
@@ -119,9 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             alert('エラーが発生しました');
         }
-    };
+    }
 
-    window.deleteRecipe = async (id) => {
+    async function deleteRecipe(id) {
         if (!confirm('削除してもよろしいですか？')) return;
         try {
             await del(`${API_BASE}/${id}`);
@@ -129,11 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             alert('削除中にエラーが発生しました');
         }
-    };
-
-    function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
     }
+
 });

@@ -24,15 +24,10 @@ public class UserController {
     @PostMapping
     public ResponseEntity<UserDto> createUser(
             @Valid @RequestBody UserCreateRequest request) {
-        Role role = null;
-        String roleStr = request.getRole();
-        if (roleStr != null && !roleStr.isBlank()) {
-            role = Role.valueOf(roleStr.toUpperCase());
-        }
         UserDto userDto = UserDto.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
-                .role(role)
+                .role(parseRole(request.getRole()))
                 .build();
         UserDto created = userService.createUser(userDto, request.getPassword());
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -54,15 +49,10 @@ public class UserController {
     public ResponseEntity<UserDto> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateRequest request) {
-        Role role = null;
-        String roleStr = request.getRole();
-        if (roleStr != null && !roleStr.isBlank()) {
-            role = Role.valueOf(roleStr.toUpperCase());
-        }
         UserDto userDto = UserDto.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
-                .role(role)
+                .role(parseRole(request.getRole()))
                 .build();
         return ResponseEntity.ok(userService.updateUser(id, userDto));
     }
@@ -71,5 +61,19 @@ public class UserController {
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * ロール文字列を {@link Role} enum に変換します。
+     * {@code null} または空文字の場合は {@code null} を返します。
+     *
+     * @param roleStr ロール文字列（"USER" / "ADMIN"、大文字・小文字不問）
+     * @return 対応する {@link Role}、または {@code null}
+     */
+    private Role parseRole(String roleStr) {
+        if (roleStr == null || roleStr.isBlank()) {
+            return null;
+        }
+        return Role.valueOf(roleStr.toUpperCase());
     }
 }

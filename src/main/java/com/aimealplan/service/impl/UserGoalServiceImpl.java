@@ -33,9 +33,10 @@ public class UserGoalServiceImpl implements UserGoalService {
 
     @Override
     public Optional<UserGoalDto> getUserGoalByUserId(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-        return userGoalRepository.findByUser(user).map(this::toDto);
+        // ユーザー存在確認は行わず、目標の有無のみを返す。
+        // ユーザーが存在しない場合も目標未設定と同様に Optional.empty() を返し、
+        // コントローラ側で一律 404 として扱う。
+        return userGoalRepository.findByUserId(userId).map(this::toDto);
     }
 
     @Override
