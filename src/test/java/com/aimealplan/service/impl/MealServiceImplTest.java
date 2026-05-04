@@ -109,6 +109,8 @@ class MealServiceImplTest {
         List<MealDto> result = mealService.getMealsByMealPlanId(1L);
 
         assertThat(result).isEmpty();
+        // existsById が呼ばれ、true を返した（MealPlan存在）ため例外がスローされないことを確認
+        verify(mealPlanRepository).existsById(1L);
     }
 
     @Test

@@ -60,5 +60,84 @@ Spring Bootアプリケーションの標準的なディレクトリ構成に準
 └── README.md           # プロジェクト概要（本ファイル）
 ```
 
-## 4. 今後の予定
-- Phase 1: Spring Boot Entity および Repository 層の実装。
+## 4. 製造・単体試験（2026-05-03 〜 2026-05-04）
+
+### 4-1. 製造概要
+
+Spring Boot 3.x をベースとした REST API の全レイヤーを実装しました。
+
+#### 実装済みエンドポイント
+
+| リソース | パス | メソッド |
+|:---|:---|:---|
+| レシピ | `/api/recipes` | GET / POST / PUT / DELETE / GET(search) |
+| ミール | `/api/meal-plans/{mealPlanId}/meals` | GET / POST / PUT / DELETE |
+| ユーザー | `/api/users` | GET / POST / PUT / DELETE |
+| ユーザー目標 | `/api/users/{userId}/goal` | GET / POST / PUT / DELETE |
+
+#### 主な実装内容
+
+- **エンティティ層**: `User` / `MealPlan` / `Meal` / `Recipe` / `UserGoal`（JPA リレーション・`@CreationTimestamp` / `@UpdateTimestamp` 設定済み）
+- **DTO 層**: `RecipeDto` / `MealDto` / `UserDto` / `UserGoalDto` / `UserCreateRequest` / `UserUpdateRequest`（バリデーションアノテーション付き）
+- **サービス層**: 全4サービスの実装（DTO↔Entity 変換・`ResourceNotFoundException` / `DuplicateResourceException` による例外処理・`@Transactional` 制御）
+- **例外ハンドリング**: `GlobalExceptionHandler` による統一エラーレスポンス（404 / 409 / 400 / 500）
+- **セキュリティ**: `BCryptPasswordEncoder` によるパスワードハッシュ化・`SecurityConfig` 設定（TODO コメントによる本番前対応事項の明示）
+- **バリデーション**: `@PfcRatioSum` カスタムアノテーション（PFC比率合計100%チェック）・`UserUpdateRequest` / `UserCreateRequest` の `@Pattern` によるロール値検証
+- **フロントエンド**: ES Modules 構成（`constants.js` / `apiClient.js` / `app.js`）・XSS 対策（`escapeHtml`）・null ガード
+
+#### コードレビュー実施記録
+
+| レビューID | 対象 | 主な指摘・対応内容 |
+|:---|:---|:---|
+| REV-20260503-01 | src/main 初回レビュー | 空実装クラスの実装・コンパイルエラー解消・app.js 構造バグ修正（24件） |
+| REV-20260503-02 | src/main 再レビュー | DTO 導入・パスワードハッシュ化・バリデーション強化・フロントエンドモジュール化（13件） |
+| REV-20260504-01 | src/main 第3回レビュー | ユーザー重複チェック・Meal 所属チェック・UserGoal JPA リレーション設定（16件） |
+| REV-20260504-02 | src/main 第4回レビュー | ロール変換共通化・`@ResponseStatus` 二重定義解消・`@Pattern` 追加（12件） |
+
+---
+
+### 4-2. 単体試験概要
+
+JUnit 5 + Mockito + MockMvc を使用した単体テストを実装しました。
+
+#### テスト構成
+
+| テスト種別 | クラス数 | 主な内容 |
+|:---|:---:|:---|
+| コントローラテスト（`@WebMvcTest`） | 4 | 正常系・異常系・バリデーション・例外ハンドリング |
+| サービス実装テスト（Mockito） | 4 | CRUD・所属チェック・重複チェック・例外スロー |
+| エンティティテスト | 5 | Lombok アノテーション動作・循環参照除外確認 |
+| バリデーションテスト | 2 | `PfcRatioSumValidator`・`@PfcRatioSum` メタアノテーション |
+| 例外ハンドラーテスト | 1 | 全ハンドラーの HTTP ステータス・レスポンスボディ検証 |
+
+#### テストレビュー実施記録
+
+| レビューID | 対象 | 主な指摘・対応内容 |
+|:---|:---|:---|
+| REV-20260504-03 | src/test レビュー | コンパイルエラー解消・空テストクラスへの実装・スタブ検証強化（15件） |
+
+---
+
+### 4-3. カバレッジ計測結果（2026-05-04 時点）
+
+JaCoCo によるカバレッジ計測を実施しました（`lombok.config` による Lombok 生成コード除外・`AiMealPlanApplication` 除外設定済み）。
+
+| 指標 | ビジネスロジック対象 | 全体（除外設定対象含む） |
+|:---|:---:|:---:|
+| 命令カバレッジ | **98.2%** | 91.5% |
+| 分岐カバレッジ | **92.0%** | 87.2% |
+| 行カバレッジ | — | 92.0% |
+| メソッドカバレッジ | — | 92.5% |
+
+コントローラ全4クラス・`RecipeServiceImpl`・`UserGoalServiceImpl`・`PfcRatioSumValidator` は **100%** を達成。
+
+カバレッジ改善計画は `docs/reviews/REV-20260504-04.md` で管理しています。
+
+
+
+## 5. 今後の予定
+
+- 認証・認可機能の実装（`SecurityConfig` の `TODO [SEC-01]` / `TODO [SEC-02]` 対応）
+- `MealPlan` コントローラ・サービスの実装
+- 統合テスト・E2E テストの追加
+- カバレッジ残課題（`UserServiceImpl` 91.5%）の解消
