@@ -66,6 +66,9 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(buildCreateRequest())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.username").value("testuser"));
+
+        // パスワードがサービス層に正しく渡されていることを明示的に検証
+        verify(userService).createUser(any(UserDto.class), eq("password123"));
     }
 
     @Test
