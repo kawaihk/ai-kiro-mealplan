@@ -51,5 +51,5 @@ button {
     transition: background-color 0.3s ease;
 }
 button:hover {
-    background-color: #45a049; /* primary-colorの少し濃い色 */
+    filter: brightness(0.9); /* --primary-color の変更に自動追従 */
 }

@@ -2,6 +2,7 @@ package com.aimealplan.model;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -20,6 +21,10 @@ public class UserUpdateRequest {
     @Email(message = "メールアドレスの形式が正しくありません")
     private String email;
 
-    /** ロール文字列（USER / ADMIN）。省略時はロールを変更しない。 */
+    /** ロール文字列（USER / ADMIN）。省略時はロールを変更しない。大文字・小文字どちらも可。 */
+    @Pattern(
+        regexp = "(?i)USER|ADMIN",
+        message = "ロールは USER または ADMIN を指定してください"
+    )
     private String role;
 }

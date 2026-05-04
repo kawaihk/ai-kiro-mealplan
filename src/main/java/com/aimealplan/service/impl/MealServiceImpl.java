@@ -33,6 +33,23 @@ public class MealServiceImpl implements MealService {
         return toDto(mealRepository.save(meal));
     }
 
+    /**
+     * 指定したミールプランに紐づくMeal一覧を取得します。
+     *
+     * <p>DB呼び出しを最小化するため、まず Meal を全件取得し、結果が空の場合のみ
+     * MealPlan の存在確認を行います。これにより通常ケース（Meal が1件以上）では
+     * DB アクセスが1回で済みます。</p>
+     *
+     * <ul>
+     *   <li>MealPlan が存在し Meal が1件以上の場合 → Meal の一覧を返す</li>
+     *   <li>MealPlan が存在し Meal が0件の場合 → 空リストを返す</li>
+     *   <li>MealPlan が存在しない場合 → {@link com.aimealplan.exception.ResourceNotFoundException} をスロー（404）</li>
+     * </ul>
+     *
+     * @param mealPlanId ミールプランID
+     * @return Meal DTOのリスト（0件の場合は空リスト）
+     * @throws com.aimealplan.exception.ResourceNotFoundException 指定した mealPlanId が存在しない場合
+     */
     @Override
     public List<MealDto> getMealsByMealPlanId(Long mealPlanId) {
         // findByMealPlanId の結果が空の場合、mealPlanId の存在確認を行って

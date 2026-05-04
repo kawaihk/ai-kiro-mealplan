@@ -39,6 +39,6 @@ public class MealPlan {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "mealPlan", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "mealPlan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Meal> meals;
 }
