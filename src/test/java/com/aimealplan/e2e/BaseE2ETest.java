@@ -41,7 +41,7 @@ public abstract class BaseE2ETest {
 
     /** テスト対象アプリのベース URL。システムプロパティ app.base.url で上書き可能。 */
     protected static final String BASE_URL =
-            System.getProperty("app.base.url", "http://localhost:8080");
+            System.getProperty("app.base.url", "");
 
     /** デフォルトのタイムアウト（ミリ秒） */
     protected static final int DEFAULT_TIMEOUT_MS = 10_000;
