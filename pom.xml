@@ -71,6 +71,14 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- E2E Testing - Playwright Java -->
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>1.58.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -81,6 +89,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+            <!-- カバレッジ計測 -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -97,10 +106,30 @@
                             <excludes>
                                 <!-- Spring Boot 起動クラス: main メソッドのテストは不要 -->
                                 <exclude>**/AiMealPlanApplication.class</exclude>
-                                <!-- Spring Security設定クラス: @WebMvcTestでは読み込まれないため計測対象外 -->
-                                <exclude>**/config/SecurityConfig.class</exclude>
                             </excludes>
                         </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- E2E テスト（*IT.java）実行用 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>**/*IT.java</include>
+                    </includes>
+                    <systemPropertyVariables>
+                        <!-- Spring Boot 起動済みのアプリに接続するベース URL -->
+                        <app.base.url>http://localhost:8082</app.base.url>
+                    </systemPropertyVariables>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
                     </execution>
                 </executions>
             </plugin>

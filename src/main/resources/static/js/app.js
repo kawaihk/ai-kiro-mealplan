@@ -10,6 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 初回読み込み
     loadRecipes();
 
+    // キャンセルボタン
+    cancelBtn.addEventListener('click', () => {
+        resetForm();
+    });
+
     // 登録・更新イベント
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
