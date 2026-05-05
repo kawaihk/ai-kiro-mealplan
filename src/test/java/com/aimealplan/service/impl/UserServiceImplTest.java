@@ -21,6 +21,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -137,8 +138,11 @@ class UserServiceImplTest {
     @Test
     @DisplayName("updateUser - 正常系: ユーザー情報を更新して DTO を返す")
     void updateUser_success() {
-        UserDto updateDto = UserDto.builder().username("updated").email("updated@example.com").role(Role.ADMIN).build();
-        User updated = User.builder().id(1L).username("updated").email("updated@example.com").role(Role.ADMIN).password("hashed").build();
+        UserDto updateDto = UserDto.builder()
+                .username("updated").email("updated@example.com").role(Role.ADMIN).build();
+        User updated = User.builder()
+                .id(1L).username("updated").email("updated@example.com")
+                .role(Role.ADMIN).password("hashed").build();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(userRepository.findByUsername("updated")).thenReturn(Optional.empty());
@@ -149,6 +153,32 @@ class UserServiceImplTest {
 
         assertThat(result.getUsername()).isEqualTo("updated");
         assertThat(result.getRole()).isEqualTo(Role.ADMIN);
+    }
+
+    @Test
+    @DisplayName("updateUser - 正常系: role=null の場合は既存の role が変更されない")
+    void updateUser_roleIsNull_keepExistingRole() {
+        UserDto updateDto = UserDto.builder()
+                .username("updated")
+                .email("updated@example.com")
+                .role(null) // role を指定しない
+                .build();
+        // 既存ユーザーは Role.USER のまま保存される
+        User savedUser = User.builder()
+                .id(1L).username("updated").email("updated@example.com")
+                .role(Role.USER).password("hashed").build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findByUsername("updated")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("updated@example.com")).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        UserDto result = userService.updateUser(1L, updateDto);
+
+        // role=null を渡しても既存の Role.USER が維持されること
+        assertThat(result.getRole()).isEqualTo(Role.USER);
+        // save に渡された User の role が変更されていないことを検証
+        verify(userRepository).save(argThat(u -> u.getRole() == Role.USER));
     }
 
     @Test

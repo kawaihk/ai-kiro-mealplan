@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot Launch",
+            "request": "launch",
+            "mainClass": "com.aimealplan.AiMealPlanApplication", // ご自身のメインクラス名に書き換えてください
+            "projectName": "ai-mealplan", // pom.xmlのartifactId等に合わせてください
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "" // 起動前にビルド(リソース処理)を実行する指定
+        }
+    ]
+}

@@ -80,6 +80,34 @@ class PfcRatioSumValidatorTest {
     }
 
     @Test
+    @DisplayName("isValid - 正常系: fat のみ設定で合計100の場合は true を返す")
+    void isValid_onlyFat_sumEquals100() {
+        // protein=null(0), fat=100, carb=null(0) → 合計100
+        assertThat(validator.isValid(buildDto(null, 100, null), null)).isTrue();
+    }
+
+    @Test
+    @DisplayName("isValid - 正常系: carb のみ設定で合計100の場合は true を返す")
+    void isValid_onlyCarb_sumEquals100() {
+        // protein=null(0), fat=null(0), carb=100 → 合計100
+        assertThat(validator.isValid(buildDto(null, null, 100), null)).isTrue();
+    }
+
+    @Test
+    @DisplayName("isValid - 異常系: fat のみ設定で合計が100未満の場合は false を返す")
+    void isValid_onlyFat_sumNot100() {
+        // protein=null(0), fat=50, carb=null(0) → 合計50
+        assertThat(validator.isValid(buildDto(null, 50, null), null)).isFalse();
+    }
+
+    @Test
+    @DisplayName("isValid - 異常系: carb のみ設定で合計が100未満の場合は false を返す")
+    void isValid_onlyCarb_sumNot100() {
+        // protein=null(0), fat=null(0), carb=70 → 合計70
+        assertThat(validator.isValid(buildDto(null, null, 70), null)).isFalse();
+    }
+
+    @Test
     @DisplayName("isValid - 異常系: 全て0の場合は false を返す（未設定ではなく明示的に0を設定）")
     void isValid_allZero() {
         assertThat(validator.isValid(buildDto(0, 0, 0), null)).isFalse();
