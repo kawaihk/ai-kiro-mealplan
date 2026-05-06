@@ -172,7 +172,101 @@ S-01（ログイン）→ S-02（カレンダー）→ S-03（献立詳細）→
 
 ---
 
-## 5. ディレクトリ構成
+## 5. Docker Compose によるIT試験環境（WSL2/Ubuntu）
+
+### 5-1. 概要
+
+毎回の環境構築を不要にするため、Docker Compose で PostgreSQL + Spring Boot アプリを一括起動できる環境を整備しています。
+実行環境は **WSL2（Ubuntu）上の Docker** を前提とします（Docker Desktop は不要）。
+
+| コンテナ | イメージ | 役割 |
+|:---|:---|:---|
+| `aimealplan-db` | `postgres:16-alpine` | IT試験用 PostgreSQL |
+| `aimealplan-app` | `Dockerfile`（マルチステージビルド） | Spring Boot アプリ（`it` プロファイル） |
+
+### 5-2. WSL2/Ubuntu セットアップ（初回のみ）
+
+> **前提**: Windows 11 で WSL2 が有効化済みであること。
+
+```bash
+# Ubuntu に Docker をインストール
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl gnupg lsb-release
+
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+  | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# 現在のユーザーを docker グループに追加（sudo なしで実行可能にする）
+sudo usermod -aG docker $USER
+# ※ グループ変更を反映するため、一度ログアウト→再ログインが必要
+
+# Docker デーモン起動
+sudo service docker start
+
+# 動作確認
+docker --version
+docker compose version
+```
+
+### 5-3. 環境変数の設定
+
+```bash
+# プロジェクトルートで実行（WSL2 上）
+cp .env.example .env
+# .env を編集して POSTGRES_PASSWORD を設定する
+```
+
+`.env` の内容例:
+
+```env
+POSTGRES_DB=aimealplan_it
+POSTGRES_USER=aimealplan
+POSTGRES_PASSWORD=your_password_here
+```
+
+### 5-4. コンテナ起動・IT試験実行
+
+```bash
+# 1. コンテナをバックグラウンドで起動（初回はイメージビルドが走る）
+docker compose up -d
+
+# アプリの起動ログを確認（"Started AiMealPlanApplication" が出るまで待つ）
+docker compose logs -f app
+
+# 2. IT試験を実行（Docker IT プロファイル用 URL を指定）
+mvn failsafe:integration-test failsafe:verify -Dapp.base.url=http://localhost:8080
+
+# 特定クラスのみ実行
+mvn failsafe:integration-test failsafe:verify \
+  -Dapp.base.url=http://localhost:8080 \
+  -Dit.test=RecipeScreenTransitionIT
+
+# 3. 試験後にコンテナを停止
+docker compose down
+
+# DB データも含めて完全リセットする場合
+docker compose down -v
+```
+
+### 5-5. プロファイル対応表
+
+| プロファイル | DB | 起動方法 | IT試験 URL |
+|:---|:---|:---|:---|
+| `e2e`（既存） | H2 インメモリ | `mvn spring-boot:run -Dspring-boot.run.profiles=e2e` | `http://localhost:8082` |
+| `it`（新規） | PostgreSQL（Docker） | `docker compose up -d` | `http://localhost:8080` |
+
+---
+
+## 6. ディレクトリ構成
 
 ```text
 ├── .ai/                    # AIへの指示書・ログ管理

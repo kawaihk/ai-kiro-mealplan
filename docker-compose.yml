@@ -1,0 +1,71 @@
+# ============================================================
+# Docker Compose — IT試験用コンテナ環境
+#
+# 使用方法（WSL2/Ubuntu 上で実行）:
+#   docker compose up -d          # バックグラウンドで起動
+#   docker compose logs -f app    # アプリログを確認
+#   docker compose down           # 停止・コンテナ削除
+#   docker compose down -v        # 停止・ボリュームも削除（DB初期化）
+# ============================================================
+
+services:
+
+  # ----------------------------------------------------------
+  # PostgreSQL データベース
+  # ----------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: aimealplan-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aimealplan_it}
+      POSTGRES_USER: ${POSTGRES_USER:-aimealplan}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    ports:
+      # ホスト側ポートを公開（ローカルから psql で接続する場合に使用）
+      - "5432:5432"
+    volumes:
+      # DB データを永続化
+      - postgres_data:/var/lib/postgresql/data
+      # 初期化 SQL（コンテナ初回起動時のみ実行）
+      - ./docker/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aimealplan} -d ${POSTGRES_DB:-aimealplan_it}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ----------------------------------------------------------
+  # Spring Boot アプリケーション
+  # ----------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aimealplan-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Spring プロファイル（IT試験用: PostgreSQL 接続）
+      SPRING_PROFILES_ACTIVE: it
+      # DB 接続情報（db サービスのコンテナ名でアクセス）
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-aimealplan_it}
+      DB_USERNAME: ${POSTGRES_USER:-aimealplan}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || curl -f http://localhost:8080/ || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  postgres_data:
+    name: aimealplan_postgres_data
