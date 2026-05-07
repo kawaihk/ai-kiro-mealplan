@@ -188,8 +188,94 @@ S-01（ログイン）→ S-02（カレンダー）→ S-03（献立詳細）→
 
 > **前提**: Windows 11 で WSL2 が有効化済みであること。
 
+#### 推奨構成
+
+```
+Windows側
+└── Kiro IDE（GUI・編集・エージェント）
+        ↓ kiro . で起動
+WSL2 Ubuntu-24.04側
+├── ソースコード（/home/yourname/projects/ai-mealplan）
+├── Docker（docker compose up/down）
+├── Maven（mvn failsafe:integration-test）
+└── ターミナル（Kiro IDEの統合ターミナル）
+```
+
+| 観点 | 理由 |
+|:---|:---|
+| ファイルシステム | ソースコードをWSL2側（`/home/`）に置くことでDockerのボリュームマウントが高速 |
+| Docker | Windows側のDocker Desktopが不要。WSL2ネイティブのDockerで動作 |
+| Kiro IDE | Windows側で動くためGUIが安定。`kiro .` でWSL2のプロジェクトをそのまま開ける |
+| ターミナル | KiroのターミナルがUbuntu環境なので `docker compose` や `mvn` をそのまま実行できる |
+
+> **注意**: ソースコードは必ずWSL2側（`/home/yourname/`）に置いてください。Windows側（`/mnt/c/`）に置くとDockerのボリュームマウントが著しく遅くなります。
+
+#### Step 1: Ubuntu 24.04 のインストール
+
+Kiro IDE（GUI）を使用する場合は Ubuntu 24.04 以上が必要です。既存の Ubuntu が 22.04 の場合は、新しいディストリビューションを追加インストールします。
+
+**Windows側のPowerShellで実行:**
+
+```powershell
+# WSL を最新版に更新
+wsl --update
+
+# Ubuntu 24.04 をインストール
+wsl --install -d Ubuntu-24.04
+
+# インストール後、ユーザー名とパスワードを設定するプロンプトが表示される
+# 設定完了後、以下で起動
+wsl -d Ubuntu-24.04
+
+# デフォルトのディストリビューションに設定する場合（オプション）
+wsl --set-default Ubuntu-24.04
+```
+
+**インストール後、デフォルトのディストリビューションを切り替える:**
+
+```powershell
+# インストール済みディストリビューションの一覧確認（* がデフォルト）
+wsl -l -v
+# 出力例:
+#   NAME               STATE           VERSION
+# * Ubuntu-22.04LTS    Stopped         2
+#   Ubuntu-24.04       Stopped         2
+#   docker-desktop     Stopped         2
+
+# デフォルトを Ubuntu-24.04 に変更
+wsl --set-default Ubuntu-24.04
+
+# 変更後の確認（* が Ubuntu-24.04 に移動していればOK）
+wsl -l -v
+# 出力例:
+#   NAME               STATE           VERSION
+# * Ubuntu-24.04       Stopped         2
+#   Ubuntu-22.04LTS    Stopped         2
+#   docker-desktop     Stopped         2
+
+# Ubuntu-24.04 を起動
+wsl
+```
+
+**Ubuntu 24.04 が起動したら、バージョン確認:**
+
 ```bash
-# Ubuntu に Docker をインストール
+lsb_release -a
+# Ubuntu 24.04.x LTS が表示されればOK
+
+ldd --version
+# glibc 2.39 以上であることを確認
+```
+
+#### Step 2: Docker のインストール（WSL2 ネイティブ）
+
+Docker Desktop は不要です。Ubuntu-24.04 内に直接 Docker をインストールします。
+
+> **Docker Desktop を使っている場合**: Windows の「設定」→「アプリ」→「Docker Desktop」→「アンインストール」で削除してから進めてください。WSL2 側の Docker は独立して動作するため影響ありません。
+
+**① Docker の公式リポジトリを登録:**
+
+```bash
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl gnupg lsb-release
 
@@ -201,20 +287,126 @@ sudo chmod a+r /etc/apt/keyrings/docker.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
   https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" \
   | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+```
 
+**② Docker エンジンをインストール:**
+
+```bash
 sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
 
-# 現在のユーザーを docker グループに追加（sudo なしで実行可能にする）
+**③ sudo なしで実行できるようにユーザーをグループに追加:**
+
+```bash
 sudo usermod -aG docker $USER
-# ※ グループ変更を反映するため、一度ログアウト→再ログインが必要
+```
 
-# Docker デーモン起動
+グループ変更を反映するため、一度 WSL2 を再起動します。
+
+```powershell
+# PowerShell で実行
+wsl --shutdown
+wsl -d Ubuntu-24.04
+```
+
+**④ Docker デーモンを起動:**
+
+```bash
 sudo service docker start
+```
 
-# 動作確認
+**⑤ 動作確認:**
+
+```bash
 docker --version
+# Docker version 27.x.x 等が表示されればOK
+
 docker compose version
+# Docker Compose version v2.x.x 等が表示されればOK
+
+# Hello World で疎通確認
+docker run --rm hello-world
+```
+
+**⑥ WSL2 起動時に Docker を自動起動する設定:**
+
+```bash
+echo 'sudo service docker start > /dev/null 2>&1' >> ~/.bashrc
+```
+
+> **補足**: WSL2 では systemd がデフォルトで無効なため、`sudo service docker start` で手動起動が必要です。上記の設定でターミナルを開くたびに自動起動します。
+
+#### Step 3: Kiro IDE のセットアップ
+
+Kiro IDE は **Windows側にインストール**して、WSL2のターミナルから呼び出す構成が推奨です。
+（VS Code の `code .` と同じ仕組みです）
+
+**① WSL2側に誤ってインストールした場合はアンインストール:**
+
+```bash
+sudo dpkg -r kiro-ide
+# または
+sudo apt-get remove kiro-ide
+```
+
+**② Windows側に Kiro IDE をインストール:**
+
+1. Windows側のブラウザで [kiro.dev/downloads](https://kiro.dev/downloads) を開く
+2. **「Download for Windows (x64)」** をダウンロード
+3. インストーラーを実行
+
+**③ WSL2側にプロジェクトをクローン:**
+
+```bash
+# WSL2のホームディレクトリにプロジェクトを配置
+mkdir -p ~/projects
+cd ~/projects
+git clone <repository-url> ai-mealplan
+```
+
+**④ Kiro IDE からプロジェクトを開く:**
+
+```bash
+# WSL2のターミナルでプロジェクトディレクトリに移動
+cd ~/projects/ai-mealplan
+
+# Kiro IDE を起動（Windows側のKiroがWSL2のパスを開く）
+kiro .
+```
+
+**⑤ Kiro IDE の統合ターミナルを Ubuntu-24.04 に設定:**
+
+Kiro IDE のターミナルを開いたときに自動で Ubuntu-24.04（WSL2）が起動するよう設定します。
+
+**方法1: settings.json で設定（推奨）**
+
+`Ctrl + Shift + P` → `Preferences: Open User Settings (JSON)` を開き、以下を追加します。
+
+```json
+"terminal.integrated.profiles.windows": {
+  "Ubuntu-24.04 (WSL)": {
+    "path": "wsl.exe",
+    "args": ["-d", "Ubuntu-24.04", "--cd", "~"],
+    "icon": "terminal-ubuntu"
+  }
+},
+"terminal.integrated.defaultProfile.windows": "Ubuntu-24.04 (WSL)"
+```
+
+設定後、Kiro IDE のターミナル（`` Ctrl + ` ``）を開くと Ubuntu-24.04 のホームディレクトリ（`/home/yourname`）で起動します。
+
+**方法2: Windows Terminal のコマンドライン設定**
+
+Windows Terminal を使う場合は以下を設定します。
+
+1. Windows Terminal を開く
+2. タブバーの「∨」→「設定」をクリック
+3. 左メニューから「Ubuntu-24.04」を選択
+4. 「コマンドライン」欄に以下を入力して「保存」
+
+```
+wsl.exe -d Ubuntu-24.04 --cd ~
 ```
 
 ### 5-3. 環境変数の設定
